@@ -1,4 +1,4 @@
-const CACHE = "sprouty-v4";
+const CACHE = "sprouty-v5";
 const FILES = [
   "./",
   "./index.html",
