@@ -1,4 +1,4 @@
-const CACHE = "sprouty-v6";
+const CACHE = "sprouty-v14";
 const FILES = [
   "./",
   "./index.html",
@@ -6,16 +6,57 @@ const FILES = [
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css",
-  "https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+  "./libs/bootstrap/css/bootstrap.min.css",
+  "./libs/bootstrap/js/bootstrap.bundle.min.js",
+  "./images/logo.svg",
+  "./images/hero.svg",
+  "./images/course-business.svg",
+  "./images/course-climate.svg",
+  "./images/course-emerging.svg",
+  "./images/course-health.svg",
+  "./images/game-garden.svg",
+  "./images/game-detectives.svg",
+  "./games/garden-trail/index.html",
+  "./games/garden-trail/game.css",
+  "./games/garden-trail/game.js",
+  "./games/time-detectives/index.html",
+  "./games/time-detectives/game.css",
+  "./games/time-detectives/game.js"
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)));
+  e.waitUntil(
+    caches.open(CACHE).then(async (c) => {
+      const failed = [];
+      for (const f of FILES) {
+        try { await c.add(f); } catch (err) { failed.push(f); }
+      }
+      if (failed.length) {
+        console.error("FAILED TO CACHE:", failed);
+        throw new Error("Missing files: " + failed.join(", "));
+      }
+    })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k.startsWith("sprouty-") && k !== CACHE).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
   e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
+    caches.match(e.request, { ignoreSearch: true }).then((res) => {
+      if (res) return res;
+      return fetch(e.request).catch(() =>
+        // Only fall back to the home page for page loads, never for images or scripts
+        e.request.mode === "navigate" ? caches.match("./index.html") : Response.error()
+      );
+    })
   );
 });
