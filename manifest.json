@@ -1,6 +1,7 @@
 {
     "name": "Sprouty",
     "short_name": "Sprouty",
+    "description": "Learn about sustainability with Sprouty! Watch videos, play games and grow your own garden, even without internet.",
     "start_url": "./index.html",
     "scope": "./",
     "display": "standalone",
